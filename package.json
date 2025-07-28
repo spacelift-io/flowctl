@@ -1,0 +1,32 @@
+{
+  "name": "@useflows/flowctl",
+  "version": "0.1.0",
+  "license": "UNLICENSED",
+  "bin": {
+    "flowctl": "./dist/main.js"
+  },
+  "type": "module",
+  "dependencies": {
+    "@clack/prompts": "^0.11.0",
+    "@types/semver": "^7.7.0",
+    "citty": "^0.1.6",
+    "consola": "^3.4.2",
+    "esbuild": "^0.25.8",
+    "open": "^10.2.0",
+    "p-debounce": "^4.0.0",
+    "picocolors": "^1.1.1",
+    "semver": "^7.7.2",
+    "tar": "^7.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.1.0",
+    "@types/tar": "^6.1.13",
+    "pkgroll": "^2.14.5",
+    "prettier": "^3.6.2"
+  },
+  "scripts": {
+    "build": "pkgroll --clean-dist",
+    "watch": "pkgroll --watch",
+    "format": "prettier --write ."
+  }
+}
