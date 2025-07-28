@@ -419,20 +419,20 @@ const bundle = defineCommand({
 
     // Create temporary files to include in the tar
     const tempDir = join(process.cwd(), ".tmp-bundle");
-    const appSchemaPath = join(tempDir, "main.js");
+    const appPath = join(tempDir, "app.js");
     const uiPath = join(tempDir, "ui.js");
 
     try {
       // Ensure temp directory exists and write files
       await mkdir(tempDir, { recursive: true });
-      await writeFile(appSchemaPath, appSchemaCode);
+      await writeFile(appPath, appSchemaCode);
 
       if (uiCode) {
         await writeFile(uiPath, uiCode);
       }
 
       // Create tar.gz bundle
-      const files = ["main.js"];
+      const files = ["app.js"];
       if (uiCode) {
         files.push("ui.js");
       }
@@ -452,7 +452,7 @@ const bundle = defineCommand({
     } finally {
       // Clean up temporary files
       try {
-        await unlink(appSchemaPath).catch(() => {});
+        await unlink(appPath).catch(() => {});
         if (uiCode) {
           await unlink(uiPath).catch(() => {});
         }
