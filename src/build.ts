@@ -29,12 +29,13 @@ export async function buildAppSchema(entrypoint: string) {
     format: "esm",
     write: false,
     banner: {
-      js: `
-        import { createRequire } from "node:module";
-        const require = createRequire(import.meta.url);
-        const __dirname = import.meta.dirname;
-        const __filename = import.meta.filename;
-      `,
+      js: `// flowctl banner
+import { createRequire } from "node:module";
+var require = createRequire(import.meta.url);
+var __dirname = import.meta.dirname;
+var __filename = import.meta.filename;
+// end banner
+`,
     },
   });
 
