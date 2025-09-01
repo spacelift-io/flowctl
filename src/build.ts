@@ -31,9 +31,15 @@ export async function buildAppSchema(entrypoint: string) {
     banner: {
       js: `
         import { createRequire } from "node:module";
-        const require = createRequire(import.meta.url);
-        const __dirname = import.meta.dirname;
-        const __filename = import.meta.filename;
+        if (typeof require === "undefined") {
+          var require = createRequire(import.meta.url);
+        }
+        if (typeof __dirname === "undefined") {
+          var __dirname = import.meta.dirname;
+        }
+        if (typeof __filename === "undefined") {
+          var __filename = import.meta.filename;
+        }
       `,
     },
   });
