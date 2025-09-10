@@ -14,14 +14,9 @@ jobs:
         with:
           node-version: "22.x"
           registry-url: "https://registry.npmjs.org"
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.11.0
-          run_install: false
       - name: Install dependencies
-        run: pnpm install
+        run: npm ci
       - name: Build
-        run: pnpm run build
+        run: npm run build
       - name: Publish
-        run: npm publish --access public
+        run: npm publish
