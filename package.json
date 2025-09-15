@@ -1,7 +1,7 @@
 {
   "name": "@useflows/flowctl",
-  "version": "0.1.3",
-  "license": "UNLICENSED",
+  "version": "0.2.0",
+  "license": "MIT",
   "bin": {
     "flowctl": "./dist/main.js"
   },
