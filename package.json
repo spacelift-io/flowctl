@@ -5,6 +5,10 @@
   "bin": {
     "flowctl": "./dist/main.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/spacelift-io/flowctl.git"
+  }
   "type": "module",
   "dependencies": {
     "@clack/prompts": "^0.11.0",
