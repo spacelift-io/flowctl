@@ -1,7 +1,7 @@
 import { defineCommand } from "citty";
 import { intro, log, outro } from "@clack/prompts";
 import color from "picocolors";
-import { login, loadToken, logoutStoredToken } from "../auth.ts";
+import { login, loadToken, logoutStoredToken, getValidToken } from "../auth.ts";
 import { handleCancel } from "../utils.ts";
 
 export default defineCommand({
@@ -54,6 +54,16 @@ export default defineCommand({
         intro(color.inverse(" CLI "));
         await logoutStoredToken();
         outro("Logged out successfully");
+      },
+    }),
+    token: defineCommand({
+      meta: {
+        name: "token",
+        description: "Get a valid access token for API access.",
+      },
+      async run() {
+        const token = await getValidToken();
+        console.log(token);
       },
     }),
   },
