@@ -1,5 +1,5 @@
 import { defineCommand } from "citty";
-import { intro, log, outro } from "@clack/prompts";
+import { intro, log, outro, select, text, isCancel } from "@clack/prompts";
 import color from "picocolors";
 import { login, loadToken, logoutStoredToken, getValidToken } from "../auth.ts";
 import { handleCancel } from "../utils.ts";
@@ -25,12 +25,49 @@ export default defineCommand({
       async run({ args }) {
         intro(color.inverse(" CLI "));
 
-        const baseUrl = args["base-url"] ?? "http://localhost";
-
         const existing = await loadToken();
         if (existing) {
           outro("Already authenticated");
           return;
+        }
+
+        let baseUrl: string;
+
+        if (args["base-url"]) {
+          baseUrl = args["base-url"];
+        } else {
+          const endpointChoice = await select<string>({
+            message: "Select API endpoint",
+            options: [
+              { value: "https://useflows.eu", label: "EU (useflows.eu)" },
+              { value: "https://useflows.us", label: "US (useflows.us)" },
+              { value: "custom", label: "Custom URL" },
+            ],
+          });
+
+          if (isCancel(endpointChoice)) {
+            handleCancel("Operation cancelled");
+          }
+
+          if (endpointChoice === "custom") {
+            const customUrl = await text({
+              message: "Enter custom API URL",
+              placeholder: "https://example.com",
+              validate(value) {
+                if (value.length === 0) {
+                  return "URL is required!";
+                }
+              },
+            });
+
+            if (isCancel(customUrl)) {
+              handleCancel("Operation cancelled");
+            }
+
+            baseUrl = customUrl;
+          } else {
+            baseUrl = endpointChoice;
+          }
         }
 
         log.info("Starting authentication");

@@ -153,7 +153,7 @@ export async function login(baseUrl: string): Promise<StoredToken> {
     redirect_uris: [redirectUri],
     grant_types: ["authorization_code", "refresh_token"],
     response_types: ["code"],
-    scope: "api apps:admin apps:view",
+    scope: "api apps:admin apps:view flows:edit",
     token_endpoint_auth_method: "none",
   };
 
@@ -182,7 +182,7 @@ export async function login(baseUrl: string): Promise<StoredToken> {
   authorizeUrl.searchParams.set("client_id", clientId);
   authorizeUrl.searchParams.set("redirect_uri", redirectUri);
   authorizeUrl.searchParams.set("response_type", "code");
-  authorizeUrl.searchParams.set("scope", "api apps:admin apps:view");
+  authorizeUrl.searchParams.set("scope", "api apps:admin apps:view flows:edit");
   authorizeUrl.searchParams.set("state", state);
   authorizeUrl.searchParams.set("code_challenge", codeChallenge);
   authorizeUrl.searchParams.set("code_challenge_method", "S256");
