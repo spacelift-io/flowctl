@@ -64,12 +64,14 @@ export async function createVersion(
   appId: string,
   version: string,
   code: string,
+  sourceMap: string,
   uiCode: string,
 ) {
   const res = await apiFetch("/cli/apps/create_version", {
     customAppId: appId,
     version,
     code,
+    sourceMap,
     uiCode,
   });
   return res.data.appVersion.id;
@@ -97,11 +99,13 @@ export async function getVersions(appId: string) {
 export async function updateVersion(
   appVersionId: string,
   code: string,
+  sourceMap: string,
   uiCode: string,
 ) {
   await apiFetch("/cli/apps/update_version", {
     id: appVersionId,
     code,
+    sourceMap,
     uiCode,
   });
 }
