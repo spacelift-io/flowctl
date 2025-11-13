@@ -21,13 +21,16 @@ export async function buildAppSchema(entrypoint: string) {
   const out = await esbuild.build({
     entryPoints: [join(process.cwd(), entrypoint)],
     bundle: true,
-    outfile: "output.js",
+    outfile: "app.js",
     loader: { ".ts": "ts" },
     external: ["@slflows/sdk/*", "*.node"],
     platform: "node",
     target: "node22",
     format: "esm",
     write: false,
+    minify: true,
+    sourcemap: "linked",
+    sourcesContent: false,
     banner: {
       js: `// flowctl banner
 import { createRequire } from "node:module";
@@ -39,5 +42,5 @@ var __filename = import.meta.filename;
     },
   });
 
-  return out.outputFiles[0].text;
+  return [out.outputFiles[0].text, out.outputFiles[1].text];
 }
