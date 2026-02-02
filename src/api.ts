@@ -1,6 +1,14 @@
 import { getAuthHeaders, getBaseUrl } from "./auth.ts";
 import { handleCancel } from "./utils.ts";
 
+function safeParseJson(text: string) {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return undefined;
+  }
+}
+
 async function apiFetch(path: string, body: any) {
   const headers = {
     "Content-Type": "application/json",
@@ -18,9 +26,15 @@ async function apiFetch(path: string, body: any) {
   let errorMessage = res.ok ? null : res.statusText;
 
   try {
-    const json = await res.json();
+    const text = await res.text();
 
-    if (json.error) {
+    const json = safeParseJson(text);
+
+    if (json === undefined) {
+      throw new Error(text);
+    }
+
+    if (json?.error) {
       throw new Error(json.error);
     }
 
