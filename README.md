@@ -14,7 +14,16 @@ Before using most commands, you need to authenticate with the Spacelift Flows AP
 
 ### `flowctl auth login`
 
-Authenticate with the Spacelift Flows API to enable access to projects and apps.
+Interactively authenticate with the Spacelift Flows API to enable access to projects and apps.
+
+### API Key
+
+Alternatively you can use an API key, by setting the FLOWCTL_API_KEY and FLOWCTL_BASE_URL environment variables:
+
+```bash
+export FLOWCTL_API_KEY="sfapi_..."
+export FLOWCTL_BASE_URL="https://useflows.eu"
+````
 
 #### Options
 

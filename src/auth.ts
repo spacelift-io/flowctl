@@ -10,6 +10,39 @@ import { spinner } from "@clack/prompts";
 
 const TOKEN_FILE = path.join(os.homedir(), ".spaceflows", "cli-token.json");
 
+// Environment variable names for API key authentication
+const ENV_API_KEY = "FLOWCTL_API_KEY";
+const ENV_BASE_URL = "FLOWCTL_BASE_URL";
+
+/**
+ * Check if API key authentication is configured via environment variables.
+ * Returns the API key and base URL if FLOWCTL_API_KEY is set.
+ * Throws an error if FLOWCTL_API_KEY is set but FLOWCTL_BASE_URL is not.
+ */
+function getEnvAuth(): { apiKey: string; baseUrl: string } | null {
+  const apiKey = process.env[ENV_API_KEY];
+  const baseUrl = process.env[ENV_BASE_URL];
+
+  if (apiKey) {
+    if (!baseUrl) {
+      throw new Error(
+        `${ENV_BASE_URL} must be set when using ${ENV_API_KEY}`,
+      );
+    }
+    return { apiKey, baseUrl: baseUrl.replace(/\/$/, "") };
+  }
+
+  return null;
+}
+
+/**
+ * Check if the CLI is using environment variable-based API key authentication.
+ * Useful for commands that may want to skip interactive prompts.
+ */
+export function isUsingEnvAuth(): boolean {
+  return !!process.env[ENV_API_KEY];
+}
+
 interface StoredToken {
   access_token: string;
   refresh_token?: string;
@@ -294,11 +327,21 @@ export async function getValidToken(): Promise<string> {
 }
 
 export async function getAuthHeaders() {
+  const envAuth = getEnvAuth();
+  if (envAuth) {
+    return { Authorization: `Bearer ${envAuth.apiKey}` } as const;
+  }
+
   const accessToken = await getValidToken();
   return { Authorization: `Bearer ${accessToken}` } as const;
 }
 
 export async function getBaseUrl() {
+  const envAuth = getEnvAuth();
+  if (envAuth) {
+    return envAuth.baseUrl;
+  }
+
   const token = await loadToken();
   if (token?.base_url) {
     return token.base_url;
