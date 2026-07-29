@@ -23,7 +23,7 @@ Alternatively you can use an API key, by setting the FLOWCTL_API_KEY and FLOWCTL
 ```bash
 export FLOWCTL_API_KEY="sfapi_..."
 export FLOWCTL_BASE_URL="https://useflows.eu"
-````
+```
 
 #### Options
 
@@ -66,6 +66,47 @@ Create a new Spacelift Flows application. This command will prompt for:
 ```bash
 flowctl app create
 flowctl app create --project my-project-id
+```
+
+## Flow Management
+
+### `flowctl flow export`
+
+Export the definition of a flow as YAML. When `--id` is omitted you are prompted
+to pick a project and then a flow. By default the definition is written to
+standard output so it can be piped or redirected; pass `-f` to write it to a file
+instead.
+
+Because the prompts would otherwise end up in a redirected definition, `--id` is
+required when the command is not attached to a terminal (in CI, for example).
+
+This command needs the `flows:view` scope. If you authenticated before that scope
+was requested, you will see `missing capability "flows:view"` — run `flowctl auth
+logout` and `flowctl auth login` again to get a token that has it.
+
+#### Options
+
+- `--id` (optional): ID of the flow to export (prompts for one when omitted)
+- `-p`/`--project` (optional): Project ID, to skip the project prompt
+- `-f`/`--file` (optional): Path to write the definition to instead of standard output
+
+#### Examples
+
+```bash
+# Pick a project and a flow interactively, printing to standard output
+flowctl flow export
+
+# Pick a flow from a known project, writing it to a file
+flowctl flow export --project my-project-id -f my-flow.yaml
+
+# Print a known flow's definition to standard output
+flowctl flow export --id 2f1b0c9e-1234-4a56-b789-0123456789ab
+
+# Redirect it to a file yourself
+flowctl flow export --id 2f1b0c9e-1234-4a56-b789-0123456789ab > my-flow.yaml
+
+# Write the definition to a file
+flowctl flow export --id 2f1b0c9e-1234-4a56-b789-0123456789ab -f my-flow.yaml
 ```
 
 ## Version Management

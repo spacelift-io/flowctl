@@ -10,6 +10,12 @@ import { spinner } from "@clack/prompts";
 
 const TOKEN_FILE = path.join(os.homedir(), ".spaceflows", "cli-token.json");
 
+// Scopes map one-to-one onto server capabilities and are NOT expanded, so every
+// capability a command needs has to be listed here explicitly: holding
+// `flows:edit` does not imply `flows:view`. The client registration and the
+// authorize request must agree, or authorization fails with "invalid scope".
+const SCOPES = "api apps:admin apps:view flows:view flows:edit";
+
 // Environment variable names for API key authentication
 const ENV_API_KEY = "FLOWCTL_API_KEY";
 const ENV_BASE_URL = "FLOWCTL_BASE_URL";
@@ -25,9 +31,7 @@ function getEnvAuth(): { apiKey: string; baseUrl: string } | null {
 
   if (apiKey) {
     if (!baseUrl) {
-      throw new Error(
-        `${ENV_BASE_URL} must be set when using ${ENV_API_KEY}`,
-      );
+      throw new Error(`${ENV_BASE_URL} must be set when using ${ENV_API_KEY}`);
     }
     return { apiKey, baseUrl: baseUrl.replace(/\/$/, "") };
   }
@@ -186,7 +190,7 @@ export async function login(baseUrl: string): Promise<StoredToken> {
     redirect_uris: [redirectUri],
     grant_types: ["authorization_code", "refresh_token"],
     response_types: ["code"],
-    scope: "api apps:admin apps:view flows:edit",
+    scope: SCOPES,
     token_endpoint_auth_method: "none",
   };
 
@@ -215,7 +219,7 @@ export async function login(baseUrl: string): Promise<StoredToken> {
   authorizeUrl.searchParams.set("client_id", clientId);
   authorizeUrl.searchParams.set("redirect_uri", redirectUri);
   authorizeUrl.searchParams.set("response_type", "code");
-  authorizeUrl.searchParams.set("scope", "api apps:admin apps:view flows:edit");
+  authorizeUrl.searchParams.set("scope", SCOPES);
   authorizeUrl.searchParams.set("state", state);
   authorizeUrl.searchParams.set("code_challenge", codeChallenge);
   authorizeUrl.searchParams.set("code_challenge_method", "S256");

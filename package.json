@@ -23,7 +23,7 @@
     "tar": "^7.4.3"
   },
   "devDependencies": {
-    "@types/node": "^24.1.0",
+    "@types/node": "^24.13.3",
     "@types/tar": "^6.1.13",
     "pkgroll": "^2.14.5",
     "prettier": "^3.6.2"

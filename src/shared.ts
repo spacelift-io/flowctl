@@ -1,5 +1,5 @@
 import { isCancel, log, select } from "@clack/prompts";
-import { getApps, getVersions, getProjects } from "./api";
+import { getApps, getFlows, getVersions, getProjects } from "./api";
 import { compare } from "semver";
 import { handleCancel } from "./utils";
 
@@ -51,6 +51,32 @@ export async function selectApp(projectId: string) {
   }
 
   return appId;
+}
+
+export async function selectFlow(projectId: string) {
+  const flows = await getFlows(projectId);
+
+  if (flows.length === 0) {
+    handleCancel("No flows found in this project");
+  }
+
+  const flowId = await select<string>({
+    message: "Pick a flow",
+    options: flows.map((flow) => ({
+      value: flow.id,
+      label: flow.name,
+    })),
+  });
+
+  if (isCancel(flowId)) {
+    handleCancel("Operation cancelled");
+  }
+
+  if (!flowId) {
+    handleCancel("No flow selected");
+  }
+
+  return flowId;
 }
 
 export async function selectAppVersion(appId: string) {
