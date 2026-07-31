@@ -3,6 +3,7 @@ import { defineCommand, runMain } from "citty";
 import version from "./commands/version.ts";
 import app from "./commands/app.ts";
 import auth from "./commands/auth.ts";
+import flow from "./commands/flow.ts";
 
 const main = defineCommand({
   meta: {
@@ -13,6 +14,7 @@ const main = defineCommand({
     app,
     version,
     auth,
+    flow,
   },
 });
 

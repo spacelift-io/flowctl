@@ -124,3 +124,16 @@ export async function getProjects() {
   const data = await apiFetch("/cli/projects", {});
   return data.projects as Array<{ id: string; name: string }>;
 }
+
+export async function getFlows(projectId: string) {
+  const data = await apiFetch("/cli/flows/list_flows", { projectId });
+  return data.data.flows as Array<{ id: string; name: string }>;
+}
+
+export async function exportFlowDefinition(flowId: string) {
+  const res = await apiFetch("/cli/flows/export", { flowId });
+
+  // The handler returns the definition in its own `data` field, which the
+  // standard response envelope then nests under `data` as well.
+  return res.data.data as string;
+}
