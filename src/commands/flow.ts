@@ -31,6 +31,23 @@ const exportFlow = defineCommand({
       required: false,
       description: "Path to write the definition to (defaults to stdout)",
     },
+    // Named positively so citty's --no- handling flips them.
+    ids: {
+      type: "boolean",
+      default: true,
+      description:
+        "Omit app installation, data table and agent pool IDs (they are project scoped)",
+    },
+    layout: {
+      type: "boolean",
+      default: true,
+      description: "Omit canvas positions and note styling",
+    },
+    "app-schemas": {
+      type: "boolean",
+      default: true,
+      description: "Omit inline app block schemas",
+    },
   },
   async run({ args }) {
     // Bare arguments are dropped silently, so `export --id <id> out.yaml` would
@@ -81,10 +98,16 @@ const exportFlow = defineCommand({
       }
     }
 
+    const exportOptions = {
+      omitIds: !args.ids,
+      omitLayout: !args.layout,
+      omitAppSchemas: !args["app-schemas"],
+    };
+
     // Without a file the definition goes to stdout so it can be piped, which
     // means no interactive decoration is allowed around it.
     if (!args.file) {
-      const definition = await exportFlowDefinition(flowId);
+      const definition = await exportFlowDefinition(flowId, exportOptions);
 
       process.stdout.write(definition);
 
@@ -94,7 +117,7 @@ const exportFlow = defineCommand({
     const s = spinner();
     s.start("Exporting the flow definition...");
 
-    const definition = await exportFlowDefinition(flowId);
+    const definition = await exportFlowDefinition(flowId, exportOptions);
 
     await writeFile(args.file, definition, "utf8");
 

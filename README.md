@@ -89,6 +89,14 @@ logout` and `flowctl auth login` again to get a token that has it.
 - `--id` (optional): ID of the flow to export (prompts for one when omitted)
 - `-p`/`--project` (optional): Project ID, to skip the project prompt
 - `-f`/`--file` (optional): Path to write the definition to instead of standard output
+- `--no-ids` (optional): Omit app installation, data table and agent pool IDs, which are scoped to the project the flow lives in
+- `--no-layout` (optional): Omit canvas positions and note styling
+- `--no-app-schemas` (optional): Omit the inline app block schemas, which are only read when an app installation cannot be resolved
+
+Note that reference keys are generated from the app name rather than carried
+over from a hand-written definition, so a `slack_prod` key in your own YAML
+comes back as `slack`, and any installation mapping has to use the generated
+key.
 
 #### Examples
 
@@ -107,6 +115,11 @@ flowctl flow export --id 2f1b0c9e-1234-4a56-b789-0123456789ab > my-flow.yaml
 
 # Write the definition to a file
 flowctl flow export --id 2f1b0c9e-1234-4a56-b789-0123456789ab -f my-flow.yaml
+
+# Export something portable enough to apply to another project, or pick just
+# the parts you want
+flowctl flow export --id 2f1b0c9e-1234-4a56-b789-0123456789ab \
+  --no-ids --no-layout --no-app-schemas -f my-flow.yaml
 ```
 
 ## Version Management
