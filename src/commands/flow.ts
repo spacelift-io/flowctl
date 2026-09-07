@@ -48,12 +48,6 @@ const exportFlow = defineCommand({
       default: true,
       description: "Omit inline app block schemas",
     },
-    portable: {
-      type: "boolean",
-      default: false,
-      description:
-        "Shorthand for --no-ids --no-layout --no-app-schemas, for a definition another project can apply",
-    },
   },
   async run({ args }) {
     // Bare arguments are dropped silently, so `export --id <id> out.yaml` would
@@ -105,9 +99,9 @@ const exportFlow = defineCommand({
     }
 
     const exportOptions = {
-      omitIds: args.portable || !args.ids,
-      omitLayout: args.portable || !args.layout,
-      omitAppSchemas: args.portable || !args["app-schemas"],
+      omitIds: !args.ids,
+      omitLayout: !args.layout,
+      omitAppSchemas: !args["app-schemas"],
     };
 
     // Without a file the definition goes to stdout so it can be piped, which

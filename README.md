@@ -92,13 +92,6 @@ logout` and `flowctl auth login` again to get a token that has it.
 - `--no-ids` (optional): Omit app installation, data table and agent pool IDs, which are scoped to the project the flow lives in
 - `--no-layout` (optional): Omit canvas positions and note styling
 - `--no-app-schemas` (optional): Omit the inline app block schemas, which are only read when an app installation cannot be resolved
-- `--portable` (optional): Shorthand for all three of the above
-
-The three omit options are independent, and combining them gives a definition
-that can be applied to a different project. `--portable` implies all three, so
-passing it together with `--ids` still omits the IDs. References are always kept, so the
-target project resolves data tables and agent pools by name, and app
-installations through the Terraform provider's `app_installation_mapping`.
 
 Note that reference keys are generated from the app name rather than carried
 over from a hand-written definition, so a `slack_prod` key in your own YAML
@@ -123,10 +116,8 @@ flowctl flow export --id 2f1b0c9e-1234-4a56-b789-0123456789ab > my-flow.yaml
 # Write the definition to a file
 flowctl flow export --id 2f1b0c9e-1234-4a56-b789-0123456789ab -f my-flow.yaml
 
-# Export something portable enough to apply to another project
-flowctl flow export --id 2f1b0c9e-1234-4a56-b789-0123456789ab --portable -f my-flow.yaml
-
-# The same thing spelled out, or pick just the parts you want
+# Export something portable enough to apply to another project, or pick just
+# the parts you want
 flowctl flow export --id 2f1b0c9e-1234-4a56-b789-0123456789ab \
   --no-ids --no-layout --no-app-schemas -f my-flow.yaml
 ```
