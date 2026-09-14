@@ -103,7 +103,7 @@ const create = defineCommand({
     const s = spinner();
     s.start("Building the app schema...");
 
-    const appSchemaCode = await buildAppSchema(args.entrypoint);
+    const [sourceMap, appSchemaCode] = await buildAppSchema(args.entrypoint);
 
     s.stop("App schema built!");
 
@@ -132,6 +132,7 @@ const create = defineCommand({
       appId,
       version,
       appSchemaCode,
+      sourceMap,
       uiCode,
     );
 
@@ -254,7 +255,7 @@ const update = defineCommand({
     const build = async () => {
       s.start("Building the app schema...");
 
-      const appSchemaCode = await buildAppSchema(args.entrypoint);
+      const [sourceMap, appSchemaCode] = await buildAppSchema(args.entrypoint);
 
       s.stop("App schema built!");
 
@@ -278,7 +279,7 @@ const update = defineCommand({
 
       s.start("Updating the app version...");
 
-      await updateVersion(appVersionId, appSchemaCode, uiCode);
+      await updateVersion(appVersionId, appSchemaCode, sourceMap, uiCode);
 
       s.stop("App version updated!");
     };
@@ -382,7 +383,7 @@ const bundle = defineCommand({
     const s = spinner();
     s.start("Building the app schema...");
 
-    const appSchemaCode = await buildAppSchema(args.entrypoint);
+    const [sourceMap, appSchemaCode] = await buildAppSchema(args.entrypoint);
 
     s.stop("App schema built!");
 
@@ -408,9 +409,7 @@ const bundle = defineCommand({
 
     s.start("Creating bundle...");
 
-    const { writeFile, mkdir, unlink, rmdir } = await import(
-      "node:fs/promises"
-    );
+    const { writeFile, mkdir, unlink, rm } = await import("node:fs/promises");
     const { join } = await import("node:path");
     const tar = await import("tar");
 
@@ -421,18 +420,19 @@ const bundle = defineCommand({
     const tempDir = join(process.cwd(), ".tmp-bundle");
     const appPath = join(tempDir, "app.js");
     const uiPath = join(tempDir, "ui.js");
-
+    const sourceMapPath = join(tempDir, "app.js.map");
     try {
       // Ensure temp directory exists and write files
       await mkdir(tempDir, { recursive: true });
       await writeFile(appPath, appSchemaCode);
+      await writeFile(sourceMapPath, sourceMap);
 
       if (uiCode) {
         await writeFile(uiPath, uiCode);
       }
 
       // Create tar.gz bundle
-      const files = ["app.js"];
+      const files = ["app.js", "app.js.map"];
       if (uiCode) {
         files.push("ui.js");
       }
@@ -456,7 +456,7 @@ const bundle = defineCommand({
         if (uiCode) {
           await unlink(uiPath).catch(() => {});
         }
-        await rmdir(tempDir).catch(() => {});
+        await rm(tempDir, { recursive: true }).catch(() => {});
       } catch {
         // Ignore cleanup errors
       }
