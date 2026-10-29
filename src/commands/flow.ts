@@ -6,7 +6,6 @@ import { setTimeout as sleep } from "node:timers/promises";
 import {
   cancelTestScenarioRun,
   exportFlowDefinition,
-  getTestScenarioAssertions,
   getTestScenarioRun,
   listTestScenarios,
   startTestScenarioRun,
@@ -191,24 +190,13 @@ async function reportRun(scenario: TestScenario, started: StartedRun) {
     `${scenario.name} failed${run?.error ? `: ${run.error}` : ""}`,
   ];
 
-  if (failed.length > 0) {
-    const definitions = new Map(
-      (await getTestScenarioAssertions(scenario.id)).map((assertion) => [
-        assertion.id,
-        assertion,
-      ]),
+  for (const assertion of failed) {
+    const output = assertion.outputKey ? ` (${assertion.outputKey})` : "";
+    const detail = assertion.detail ? `: ${assertion.detail}` : "";
+
+    lines.push(
+      `  ${assertion.kind} assertion on ${assertion.blockName ?? "an unnamed block"}${output}${detail}`,
     );
-
-    for (const assertion of failed) {
-      const definition = definitions.get(assertion.assertionId);
-      const label = definition
-        ? `${definition.kind} assertion on block ${definition.blockId}`
-        : `assertion ${assertion.assertionId}`;
-
-      lines.push(
-        `  ${label}${assertion.detail ? `: ${assertion.detail}` : ""}`,
-      );
-    }
   }
 
   log.error(lines.join("\n"));

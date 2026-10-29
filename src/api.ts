@@ -152,12 +152,6 @@ export interface TestScenario {
   name: string;
 }
 
-export interface TestScenarioAssertion {
-  id: string;
-  blockId: string;
-  kind: "output" | "input" | "noEvents";
-}
-
 export type TestScenarioRunStatus =
   "queued" | "pending" | "running" | "passed" | "failed" | "canceled";
 
@@ -172,18 +166,14 @@ export interface TestScenarioRunAssertion {
   assertionId: string;
   status: "pending" | "passed" | "failed";
   detail: string | null;
+  blockName: string | null;
+  kind: "output" | "input" | "noEvents";
+  outputKey: string | null;
 }
 
 export async function listTestScenarios(flowId: string) {
   const res = await apiFetch("/cli/flows/list_test_scenarios", { flowId });
   return res.data.scenarios as TestScenario[];
-}
-
-export async function getTestScenarioAssertions(scenarioId: string) {
-  const res = await apiFetch("/cli/flows/get_test_scenario", {
-    id: scenarioId,
-  });
-  return res.data.assertions as TestScenarioAssertion[];
 }
 
 export async function startTestScenarioRun(scenarioId: string) {
