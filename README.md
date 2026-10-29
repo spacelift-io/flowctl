@@ -138,9 +138,14 @@ which assertions failed, for example
 It exits with a non-zero status unless every scenario passed, so it can gate a
 CI pipeline. Pressing Ctrl-C cancels the runs that are still active.
 
-`--id` is required when the command is not attached to a terminal. Starting runs
-needs the `flows:edit` scope, and test scenarios must be enabled for your
-organization.
+`--id` is required when the command is not attached to a terminal. Test
+scenarios must be enabled for your organization.
+
+This command needs the `flows:view` and `test_scenarios:run` scopes, plus the
+editor role on the flow's project. An API key with only `api`, `flows:view` and
+`test_scenarios:run` is enough. If you authenticated before `test_scenarios:run`
+was requested, you will see `missing capability "test_scenarios:run"`. Run
+`flowctl auth logout` and `flowctl auth login` again to get a token that has it.
 
 #### Options
 
