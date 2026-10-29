@@ -193,6 +193,16 @@ export async function startTestScenarioRun(scenarioId: string) {
   return res.data.id as string;
 }
 
+export async function startTestScenarioRunBatch(flowId: string) {
+  const res = await apiFetch("/cli/flows/start_test_scenario_run_batch", {
+    flowId,
+  });
+  return res.data as {
+    runIds: string[];
+    skipped: Array<{ scenarioId: string; reason: string }>;
+  };
+}
+
 export async function getTestScenarioRun(runId: string) {
   const res = await apiFetch("/cli/flows/get_test_scenario_run", {
     id: runId,
