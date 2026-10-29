@@ -1,4 +1,11 @@
-import { intro, log, outro, spinner } from "@clack/prompts";
+import {
+  intro,
+  isCancel,
+  log,
+  multiselect,
+  outro,
+  spinner,
+} from "@clack/prompts";
 import { defineCommand } from "citty";
 import color from "picocolors";
 import { writeFile } from "node:fs/promises";
@@ -267,6 +274,29 @@ const testFlow = defineCommand({
       scenarios.map((scenario) => [scenario.id, scenario]),
     );
 
+    let selected = args.scenario
+      ? pickScenarios(scenarios, args.scenario)
+      : undefined;
+
+    if (mustSelect && !selected) {
+      const ids = await multiselect<string>({
+        message: "Pick the scenarios to run",
+        options: scenarios.map((scenario) => ({
+          value: scenario.id,
+          label: scenario.name,
+        })),
+        initialValues: scenarios.map((scenario) => scenario.id),
+      });
+
+      if (isCancel(ids)) {
+        handleCancel("Operation cancelled");
+      }
+
+      if (ids.length < scenarios.length) {
+        selected = ids.map((id) => scenariosById.get(id)!);
+      }
+    }
+
     const s = spinner();
     s.start("Starting test scenario runs...");
 
@@ -287,8 +317,8 @@ const testFlow = defineCommand({
     });
 
     // A batch always covers every scenario of the flow.
-    if (args.scenario) {
-      for (const scenario of pickScenarios(scenarios, args.scenario)) {
+    if (selected) {
+      for (const scenario of selected) {
         runs.push({ runId: await startTestScenarioRun(scenario.id) });
       }
     } else {
