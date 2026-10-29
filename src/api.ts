@@ -146,3 +146,63 @@ export async function exportFlowDefinition(
   // standard response envelope then nests under `data` as well.
   return res.data.data as string;
 }
+
+export interface TestScenario {
+  id: string;
+  name: string;
+}
+
+export type TestScenarioRunStatus =
+  "queued" | "pending" | "running" | "passed" | "failed" | "canceled";
+
+export interface TestScenarioRun {
+  id: string;
+  scenarioId: string;
+  status: TestScenarioRunStatus;
+  error: string | null;
+}
+
+export interface TestScenarioRunAssertion {
+  assertionId: string;
+  status: "pending" | "passed" | "failed";
+  detail: string | null;
+  blockName: string | null;
+  kind: "output" | "input" | "noEvents";
+  outputKey: string | null;
+}
+
+export async function listTestScenarios(flowId: string) {
+  const res = await apiFetch("/cli/flows/list_test_scenarios", { flowId });
+  return res.data.scenarios as TestScenario[];
+}
+
+export async function startTestScenarioRun(scenarioId: string) {
+  const res = await apiFetch("/cli/flows/start_test_scenario_run", {
+    scenarioId,
+  });
+  return res.data.id as string;
+}
+
+export async function startTestScenarioRunBatch(flowId: string) {
+  const res = await apiFetch("/cli/flows/start_test_scenario_run_batch", {
+    flowId,
+  });
+  return res.data as {
+    runIds: string[];
+    skipped: Array<{ scenarioId: string; reason: string }>;
+  };
+}
+
+export async function getTestScenarioRun(runId: string) {
+  const res = await apiFetch("/cli/flows/get_test_scenario_run", {
+    id: runId,
+  });
+  return res.data as {
+    run: TestScenarioRun;
+    assertions: TestScenarioRunAssertion[];
+  };
+}
+
+export async function cancelTestScenarioRun(runId: string) {
+  await apiFetch("/cli/flows/cancel_test_scenario_run", { id: runId });
+}

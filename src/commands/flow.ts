@@ -1,8 +1,26 @@
-import { intro, outro, spinner } from "@clack/prompts";
+import {
+  intro,
+  isCancel,
+  log,
+  multiselect,
+  outro,
+  spinner,
+} from "@clack/prompts";
 import { defineCommand } from "citty";
 import color from "picocolors";
 import { writeFile } from "node:fs/promises";
-import { exportFlowDefinition } from "../api.ts";
+import { setTimeout as sleep } from "node:timers/promises";
+import {
+  cancelTestScenarioRun,
+  exportFlowDefinition,
+  getTestScenarioRun,
+  listTestScenarios,
+  startTestScenarioRun,
+  startTestScenarioRunBatch,
+  type TestScenario,
+  type TestScenarioRun,
+  type TestScenarioRunAssertion,
+} from "../api.ts";
 import { selectFlow, selectProject } from "../shared.ts";
 import { handleCancel } from "../utils.ts";
 
@@ -127,6 +145,241 @@ const exportFlow = defineCommand({
   },
 });
 
+const POLL_INTERVAL_MS = 2000;
+
+const SETTLED_STATUSES = ["passed", "failed", "canceled"];
+
+interface StartedRun {
+  runId: string;
+  run?: TestScenarioRun;
+  assertions?: TestScenarioRunAssertion[];
+}
+
+function pickScenarios(scenarios: TestScenario[], names: string) {
+  const wanted = names
+    .split(",")
+    .map((name) => name.trim())
+    .filter((name) => name !== "");
+
+  return wanted.map((name) => {
+    const scenario = scenarios.find(
+      (scenario) => scenario.name.toLowerCase() === name.toLowerCase(),
+    );
+
+    if (!scenario) {
+      const available = scenarios.map((scenario) => scenario.name).join(", ");
+      handleCancel(
+        `No test scenario named "${name}" (available: ${available})`,
+      );
+    }
+
+    return scenario;
+  });
+}
+
+async function reportRun(scenario: TestScenario, started: StartedRun) {
+  const { run, assertions = [] } = started;
+
+  if (run?.status === "passed") {
+    log.success(`${scenario.name} passed`);
+    return;
+  }
+
+  if (run?.status === "canceled") {
+    log.warn(`${scenario.name} was canceled`);
+    return;
+  }
+
+  const failed = assertions.filter(
+    (assertion) => assertion.status === "failed",
+  );
+  const lines = [
+    `${scenario.name} failed${run?.error ? `: ${run.error}` : ""}`,
+  ];
+
+  for (const assertion of failed) {
+    const output = assertion.outputKey ? ` (${assertion.outputKey})` : "";
+    const detail = assertion.detail ? `: ${assertion.detail}` : "";
+
+    lines.push(
+      `  ${assertion.kind} assertion on ${assertion.blockName ?? "an unnamed block"}${output}${detail}`,
+    );
+  }
+
+  log.error(lines.join("\n"));
+}
+
+const testFlow = defineCommand({
+  meta: {
+    name: "test",
+    description: "Run a flow's test scenarios and wait for the results",
+  },
+  args: {
+    id: {
+      type: "string",
+      required: false,
+      description: "Flow ID (prompts for one when omitted)",
+    },
+    project: {
+      type: "string",
+      required: false,
+      alias: "p",
+      description: "Project ID",
+    },
+    scenario: {
+      type: "string",
+      required: false,
+      alias: "s",
+      description:
+        "Comma-separated names of the scenarios to run (defaults to all)",
+    },
+  },
+  async run({ args }) {
+    const [stray] = args._;
+    if (stray) {
+      handleCancel(`Unexpected argument: ${stray}`);
+    }
+
+    const mustSelect = !args.id;
+
+    if (mustSelect && !(process.stdin.isTTY && process.stdout.isTTY)) {
+      handleCancel(
+        "No flow ID given: pass --id when not running in a terminal",
+      );
+    }
+
+    intro(color.inverse(" CLI "));
+
+    let flowId: string;
+
+    if (mustSelect) {
+      const projectId = args.project ?? (await selectProject());
+
+      flowId = await selectFlow(projectId);
+    } else {
+      flowId = args.id.trim();
+
+      if (!UUID.test(flowId)) {
+        handleCancel(`Not a valid flow ID: ${args.id}`);
+      }
+    }
+
+    const scenarios = await listTestScenarios(flowId);
+
+    if (scenarios.length === 0) {
+      handleCancel("This flow has no test scenarios");
+    }
+
+    const scenariosById = new Map(
+      scenarios.map((scenario) => [scenario.id, scenario]),
+    );
+
+    let selected = args.scenario
+      ? pickScenarios(scenarios, args.scenario)
+      : undefined;
+
+    if (mustSelect && !selected) {
+      const ids = await multiselect<string>({
+        message: "Pick the scenarios to run",
+        options: scenarios.map((scenario) => ({
+          value: scenario.id,
+          label: scenario.name,
+        })),
+        initialValues: scenarios.map((scenario) => scenario.id),
+      });
+
+      if (isCancel(ids)) {
+        handleCancel("Operation cancelled");
+      }
+
+      if (ids.length < scenarios.length) {
+        selected = ids.map((id) => scenariosById.get(id)!);
+      }
+    }
+
+    const s = spinner();
+    s.start("Starting test scenario runs...");
+
+    const runs: StartedRun[] = [];
+    let skipped: Array<{ scenarioId: string; reason: string }> = [];
+
+    process.on("SIGINT", async () => {
+      const active = runs.filter(
+        (started) =>
+          !started.run || !SETTLED_STATUSES.includes(started.run.status),
+      );
+
+      await Promise.all(
+        active.map((started) => cancelTestScenarioRun(started.runId)),
+      );
+
+      handleCancel(`Canceled ${active.length} active run(s)`);
+    });
+
+    // A batch always covers every scenario of the flow.
+    if (selected) {
+      for (const scenario of selected) {
+        runs.push({ runId: await startTestScenarioRun(scenario.id) });
+      }
+    } else {
+      const batch = await startTestScenarioRunBatch(flowId);
+
+      runs.push(...batch.runIds.map((runId) => ({ runId })));
+      skipped = batch.skipped;
+    }
+
+    let pending = runs;
+
+    while (pending.length > 0) {
+      s.message(`Waiting for ${pending.length} of ${runs.length} run(s)...`);
+
+      await sleep(POLL_INTERVAL_MS);
+
+      for (const started of pending) {
+        const { run, assertions } = await getTestScenarioRun(started.runId);
+
+        started.run = run;
+        started.assertions = assertions;
+      }
+
+      pending = pending.filter(
+        (started) => !SETTLED_STATUSES.includes(started.run!.status),
+      );
+    }
+
+    s.stop("All runs settled");
+
+    for (const started of runs) {
+      const { scenarioId } = started.run!;
+
+      await reportRun(
+        scenariosById.get(scenarioId) ?? { id: scenarioId, name: scenarioId },
+        started,
+      );
+    }
+
+    for (const { scenarioId, reason } of skipped) {
+      const name = scenariosById.get(scenarioId)?.name ?? scenarioId;
+
+      log.warn(`${name} was skipped: ${reason}`);
+    }
+
+    const passed = runs.filter((started) => started.run!.status === "passed");
+    const total = runs.length + skipped.length;
+
+    if (passed.length < total) {
+      handleCancel(`${passed.length} of ${total} scenario(s) passed`);
+    }
+
+    outro(`All ${total} scenario(s) passed`);
+  },
+});
+
+// Remove along with the flows-testing-scenarios feature flag in spaceflows.
+const testScenariosEnabled = ["1", "true"].includes(
+  process.env.FLOWCTL_ENABLE_TEST_SCENARIOS?.toLowerCase() ?? "",
+);
+
 export default defineCommand({
   meta: {
     name: "flow",
@@ -134,5 +387,6 @@ export default defineCommand({
   },
   subCommands: {
     export: exportFlow,
+    ...(testScenariosEnabled ? { test: testFlow } : {}),
   },
 });
