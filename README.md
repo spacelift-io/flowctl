@@ -124,6 +124,13 @@ flowctl flow export --id 2f1b0c9e-1234-4a56-b789-0123456789ab \
 
 ### `flowctl flow test`
 
+This command is in preview and only available when the
+`FLOWCTL_ENABLE_TEST_SCENARIOS` environment variable is set to `1`.
+
+```bash
+export FLOWCTL_ENABLE_TEST_SCENARIOS=1
+```
+
 Run a flow's test scenarios and wait for their results. When `--id` is omitted
 you are prompted to pick a project, a flow and then the scenarios to run, with
 all of them ticked.

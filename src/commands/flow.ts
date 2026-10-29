@@ -375,6 +375,11 @@ const testFlow = defineCommand({
   },
 });
 
+// Remove along with the flows-testing-scenarios feature flag in spaceflows.
+const testScenariosEnabled = ["1", "true"].includes(
+  process.env.FLOWCTL_ENABLE_TEST_SCENARIOS?.toLowerCase() ?? "",
+);
+
 export default defineCommand({
   meta: {
     name: "flow",
@@ -382,6 +387,6 @@ export default defineCommand({
   },
   subCommands: {
     export: exportFlow,
-    test: testFlow,
+    ...(testScenariosEnabled ? { test: testFlow } : {}),
   },
 });
