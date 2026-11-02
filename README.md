@@ -122,6 +122,58 @@ flowctl flow export --id 2f1b0c9e-1234-4a56-b789-0123456789ab \
   --no-ids --no-layout --no-app-schemas -f my-flow.yaml
 ```
 
+### `flowctl flow test`
+
+This command is in preview and only available when the
+`FLOWCTL_ENABLE_TEST_SCENARIOS` environment variable is set to `1`.
+
+```bash
+export FLOWCTL_ENABLE_TEST_SCENARIOS=1
+```
+
+Run a flow's test scenarios and wait for their results. When `--id` is omitted
+you are prompted to pick a project, a flow and then the scenarios to run, with
+all of them ticked.
+
+Without `--scenario`, every scenario of the flow runs as one batch. Scenarios
+that can't run, like one without triggers, are reported as skipped. With
+`--scenario`, only the named scenarios run.
+
+For each scenario that didn't pass, the command shows why the run failed and
+which assertions failed, for example
+`output assertion on Apply Gold Discount (default): the expression returned false`.
+It exits with a non-zero status unless every scenario passed, so it can gate a
+CI pipeline. Pressing Ctrl-C cancels the runs that are still active.
+
+`--id` is required when the command is not attached to a terminal. Test
+scenarios must be enabled for your organization.
+
+This command needs the `flows:view` and `test_scenarios:run` scopes, plus the
+editor role on the flow's project. An API key with only `api`, `flows:view` and
+`test_scenarios:run` is enough. If you authenticated before `test_scenarios:run`
+was requested, you will see `missing capability "test_scenarios:run"`. Run
+`flowctl auth logout` and `flowctl auth login` again to get a token that has it.
+
+#### Options
+
+- `--id` (optional): ID of the flow to test (prompts for one when omitted)
+- `-p`/`--project` (optional): Project ID, to skip the project prompt
+- `-s`/`--scenario` (optional): Comma-separated names of the scenarios to run, matched case-insensitively (runs all of them when omitted)
+
+#### Examples
+
+```bash
+# Pick a project, a flow and its scenarios interactively
+flowctl flow test
+
+# Run every scenario of a known flow, for example in CI
+flowctl flow test --id 2f1b0c9e-1234-4a56-b789-0123456789ab
+
+# Run only some of its scenarios
+flowctl flow test --id 2f1b0c9e-1234-4a56-b789-0123456789ab \
+  -s "gold member gets 15% off,standard member pays full price"
+```
+
 ## Version Management
 
 ### `flowctl version create`

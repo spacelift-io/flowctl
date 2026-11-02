@@ -14,7 +14,8 @@ const TOKEN_FILE = path.join(os.homedir(), ".spaceflows", "cli-token.json");
 // capability a command needs has to be listed here explicitly: holding
 // `flows:edit` does not imply `flows:view`. The client registration and the
 // authorize request must agree, or authorization fails with "invalid scope".
-const SCOPES = "api apps:admin apps:view flows:view flows:edit";
+const SCOPES =
+  "api apps:admin apps:view flows:view flows:edit test_scenarios:run";
 
 // Environment variable names for API key authentication
 const ENV_API_KEY = "FLOWCTL_API_KEY";
